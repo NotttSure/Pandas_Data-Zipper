@@ -1,0 +1,35 @@
+import pandas as pd
+from tkinter import filedialog
+import tkinter as tk
+
+# Initialize Tkinter
+root = tk.Tk()
+root.withdraw()
+
+# Prompt to select the first Excel file (Sheet with primary data)
+file1 = filedialog.askopenfilename(title="Select the First Excel File (Primary Data)")
+sheet1 = pd.read_excel(file1)
+
+# Prompt to select the second Excel file (Sheet with additional data)
+file2 = filedialog.askopenfilename(title="Select the Second Excel File (Additional Data)")
+sheet2 = pd.read_excel(file2)
+
+# Define the common ID column
+common_id = "ID"  # Replace this with your actual common ID column name
+
+# Select columns using their positional index (Excel columns C and D would be 2 and 3)
+columns_to_bring_by_index = [0, 2, 3]  # Adjust indices (0 for ID, 2 for Column C, 3 for Column D)
+sheet2_selected = sheet2.iloc[:, columns_to_bring_by_index]
+
+# Ensure you rename columns for consistency before merging if necessary
+sheet2_selected.columns = [common_id, 'Column_C', 'Column_D']
+
+# Merge the two sheets on the common ID column
+merged_sheet = sheet1.merge(sheet2_selected, on=common_id, how='left')
+
+# Prompt to save the merged file
+save_path = filedialog.asksaveasfilename(defaultextension=".xlsx", title="Save Merged Excel File")
+merged_sheet.to_excel(save_path, index=False)
+
+print(f"Data merged successfully and saved to {save_path}")
+
