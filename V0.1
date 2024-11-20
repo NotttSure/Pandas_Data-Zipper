@@ -6,30 +6,46 @@ import tkinter as tk
 root = tk.Tk()
 root.withdraw()
 
-# Prompt to select the first Excel file (Sheet with primary data)
-file1 = filedialog.askopenfilename(title="Select the First Excel File (Primary Data)")
-sheet1 = pd.read_excel(file1)
+try:
+    # Prompt to select the first Excel file (Sheet with primary data)
+    file1 = filedialog.askopenfilename(title="Select the First Excel File (Primary Data)")
+    if not file1:
+        raise FileNotFoundError("No primary file selected.")
+    sheet1 = pd.read_excel(file1, engine='openpyxl')  # Ensure you work with .xlsx
 
-# Prompt to select the second Excel file (Sheet with additional data)
-file2 = filedialog.askopenfilename(title="Select the Second Excel File (Additional Data)")
-sheet2 = pd.read_excel(file2)
+    # Prompt to select the second Excel file (Sheet with additional data)
+    file2 = filedialog.askopenfilename(title="Select the Second Excel File (Additional Data)")
+    if not file2:
+        raise FileNotFoundError("No secondary file selected.")
+    sheet2 = pd.read_excel(file2, engine='openpyxl')  # Ensure you work with .xlsx
 
-# Define the common ID column
-common_id = "ID"  # Replace this with your actual common ID column name
+    # Define the common ID column
+    common_id = "ServiceID"  # Replace with your actual column header
 
-# Select columns using their positional index (Excel columns C and D would be 2 and 3)
-columns_to_bring_by_index = [0, 2, 3]  # Adjust indices (0 for ID, 2 for Column C, 3 for Column D)
-sheet2_selected = sheet2.iloc[:, columns_to_bring_by_index]
+    # Specify columns to bring over; verify column existence
+    columns_to_bring = [
+        common_id, 'Status', 'BatchType', 'Address 01', 
+        'FullName', 'Code', 'NA_Code', 'Natural Account', 
+        'Price(Monthly)', 'Actuals 3rd party & telephony'
+    ]
 
-# Ensure you rename columns for consistency before merging if necessary
-sheet2_selected.columns = [common_id, 'Column_C', 'Column_D']
+    # Validate columns
+    missing_columns = [col for col in columns_to_bring if col not in sheet2.columns]
+    if missing_columns:
+        raise ValueError(f"The following columns are missing from the second sheet: {missing_columns}")
 
-# Merge the two sheets on the common ID column
-merged_sheet = sheet1.merge(sheet2_selected, on=common_id, how='left')
+    # Select and merge
+    sheet2_selected = sheet2[columns_to_bring]
+    merged_sheet = sheet1.merge(sheet2_selected, on=common_id, how='left')
 
-# Prompt to save the merged file
-save_path = filedialog.asksaveasfilename(defaultextension=".xlsx", title="Save Merged Excel File")
-merged_sheet.to_excel(save_path, index=False)
+    # Prompt to save the merged file
+    save_path = filedialog.asksaveasfilename(defaultextension=".xlsx", title="Save Merged Excel File")
+    if not save_path:
+        raise FileNotFoundError("No save path selected.")
+    merged_sheet.to_excel(save_path, index=False)
 
-print(f"Data merged successfully and saved to {save_path}")
+    print(f"Data merged successfully and saved to {save_path}")
+
+except Exception as e:
+    print(f"Error: {e}")
 
